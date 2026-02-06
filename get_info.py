@@ -1,8 +1,25 @@
 import yt_dlp
 import os
+import platform
 
 # Путь к QuickJS
-QUICKJS_PATH = 'C:\\msys64\\mingw64\\bin\\qjs.exe'
+
+if platform.system() == 'Linux':
+    QUICKJS_PATH = '/usr/bin/qjs'
+else:
+    QUICKJS_PATH = 'C:\\msys64\\mingw64\\bin\\qjs.exe'
+
+
+
+def check_quickjs():
+    """Проверяет наличие QuickJS и возвращает путь или None"""
+    if os.path.exists(QUICKJS_PATH):
+        print(f"✅ QuickJS найден: {QUICKJS_PATH}")
+        return QUICKJS_PATH
+    else:
+        print("QuickJS не найден")
+        return None
+    
 
 def get_video_info(url):
     """Получает информацию о видео, включая список форматов"""
@@ -11,19 +28,27 @@ def get_video_info(url):
         'no_warnings': False,
         'skip_download': True,
         'ignoreerrors': True,
-        
-        # Настройка Quickjs (совпадает с download_format)
-        'js_runtimes': {
-            'quickjs': {
-                'path': QUICKJS_PATH
-            }
-        },
-        'remote_components': ['ejs:github'],
         'nocheckcertificate': True,
-        
-        # Добавляем cookies для консистентности
-        'cookiefile': 'exported-cookies.txt' if os.path.exists('exported-cookies.txt') else None,
     }
+    
+    # Проверяем QuickJS
+    quickjs_path = check_quickjs()
+    
+    if quickjs_path:
+        # Добавляем настройки QuickJS только если он найден
+        ydl_opts.update({
+            'js_runtimes': {
+                'quickjs': {
+                    'path': quickjs_path
+                }
+            },
+            'remote_components': ['ejs:github'],
+        })
+        print(f"✅ Используем QuickJS: {quickjs_path}")
+    else:
+        print("⚠️ Работаем без QuickJS - форматы могут быть ограничены")
+    if os.path.exists('exported-cookies.txt'):
+        ydl_opts['cookiefile'] = 'exported-cookies.txt'
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
