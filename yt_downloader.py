@@ -7,7 +7,7 @@ from get_info import *
 import random 
 import platform
 
-print("Убедись, что запущен zapret-discord-youtube 1.8.4 > general(FAKE TLS AUTO ALT)")
+print("Убедись, что запущен zapret-discord-youtube > general(FAKE TLS AUTO ALT)")
 
 # Отключаем проверку SSL
 # ssl._create_default_https_context = ssl._create_unverified_context
@@ -65,7 +65,7 @@ def download_format(url, format_id, headers, convert_to_mp3, output_path="downlo
         return False
 
 def main():
-    print("=== YouTube Downloader with QuickJS ===")
+    print("=== YouTube Downloader ===")
     
     while True:
         url = input("\n🎬 Введите URL YouTube видео (или 'quit' для выхода): ").strip()
