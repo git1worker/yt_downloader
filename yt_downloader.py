@@ -11,11 +11,9 @@ print("Убедись, что запущен zapret-discord-youtube 1.8.4 > gene
 # Отключаем проверку SSL
 # ssl._create_default_https_context = ssl._create_unverified_context
 
-def download_format(url, format_id, convert_to_mp3=True, output_path="downloads"):
+def download_format(url, format_id, headers, convert_to_mp3, output_path="downloads"):
     """Скачивает выбранный формат"""
     Path(output_path).mkdir(exist_ok=True)
-    
-    dynamic_headers = get_realistic_headers()
     
     ydl_opts = {
         'format': format_id,
@@ -28,11 +26,11 @@ def download_format(url, format_id, convert_to_mp3=True, output_path="downloads"
             }
         },
         'remote_components': ['ejs:github'],
-        'nocheckcertificate': True,
+        # 'nocheckcertificate': True,
         
         # Упрощаем заголовки (убираем излишнее)
-        'user_agent': dynamic_headers['User-Agent'],
-        'http_headers': dynamic_headers,
+        'user_agent': headers['User-Agent'],
+        'http_headers': headers,
         
         # Базовые параметры загрузки
         'retries': 10,
@@ -49,12 +47,6 @@ def download_format(url, format_id, convert_to_mp3=True, output_path="downloads"
         # Добавляем cookies если есть
         'cookiefile': 'exported-cookies.txt' if os.path.exists('exported-cookies.txt') else None,
         
-        # Убираем сложные настройки
-        'quiet': False,
-        'no_warnings': False,
-        
-        # Отключаем дополнительные проверки
-        'check_formats': 'selected',  # Проверяем только выбранный формат
     }
     
     # Добавляем конвертацию в MP3 если нужно
@@ -89,8 +81,9 @@ def main():
             print("❌ Пожалуйста, введите корректный URL")
             continue
         
+        headers = get_realistic_headers()
         
-        info = get_video_info(url)
+        info = get_video_info(url, headers)
             
         if not info:
             print("❌ Не удалось получить информацию о видео")
@@ -154,7 +147,7 @@ def main():
                 convert_to_mp3 = convert_option == 'y' or convert_option == ""
             
             # Скачиваем
-            download_format(url, format_id, convert_to_mp3)
+            download_format(url, format_id, headers, convert_to_mp3)
             
         except Exception as e:
             print(f"❌ Ошибка: {e}")

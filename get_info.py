@@ -21,14 +21,25 @@ def check_quickjs():
         return None
     
 
-def get_video_info(url):
+def get_video_info(url, headers):
     """Получает информацию о видео, включая список форматов"""
+
+    headers = get_realistic_headers()
+
     ydl_opts = {
-        'quiet': False,
-        'no_warnings': False,
-        'skip_download': True,
-        'ignoreerrors': True,
-        'nocheckcertificate': True,
+        # 'nocheckcertificate': True,
+        
+        # Упрощаем заголовки (убираем излишнее)
+        'user_agent': headers['User-Agent'],
+        'http_headers': headers,
+        
+        'cookiefile': 'exported-cookies.txt' if os.path.exists('exported-cookies.txt') else None,
+
+        # Базовые параметры загрузки
+        'retries': 10,
+        'fragment_retries': 10,
+        'skip_unavailable_fragments': True,
+
     }
     
     # Проверяем QuickJS
@@ -190,18 +201,32 @@ def display_formats(audio_formats, video_formats, combined_formats):
 def get_realistic_headers():
     import random
     
-    # Простые но эффективные User-Agents
-    user_agents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    # Мобильные User-Agents для Android и iOS
+    mobile_user_agents = [
+        # Android - Chrome
+        'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36',
+        'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Mobile Safari/537.36',
+        'Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+        
+        # Android - Samsung Browser
+        'Mozilla/5.0 (Linux; Android 13; SM-S901B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/21.0 Mobile Safari/537.36',
+        
+        # iOS - Safari
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (iPad; CPU OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Mobile/15E148 Safari/604.1',
+        
+        # iOS - Chrome
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/121.0.0.0 Mobile/15E148 Safari/604.1',
+        
+        # Android - Firefox
+        'Mozilla/5.0 (Android 14; Mobile; rv:122.0) Gecko/122.0 Firefox/122.0',
     ]
     
+    user_agent = random.choice(mobile_user_agents)
     headers = {
-        'User-Agent': random.choice(user_agents),
+        'User-Agent': user_agent,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',  # Фиксированный корректный язык
+        'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
@@ -214,12 +239,26 @@ def get_realistic_headers():
         'DNT': '1',
     }
     
-    # Добавляем Sec-Ch-Ua только для Chrome (опционально)
-    if 'Chrome' in headers['User-Agent']:
+    # Определяем платформу по User-Agent
+    is_android = 'Android' in user_agent
+    is_ios = 'iPhone' in user_agent or 'iPad' in user_agent or 'CPU OS' in user_agent
+    
+    # Добавляем заголовки в зависимости от платформы
+    if 'Chrome' in user_agent and (is_android or is_ios):
+        sec_ch_ua = ''
+        platform = ''
+        
+        if is_android:
+            sec_ch_ua = '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"'
+            platform = '"Android"'
+        elif is_ios:
+            sec_ch_ua = '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"'
+            platform = '"iOS"'
+        
         headers.update({
-            'Sec-Ch-Ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Sec-Ch-Ua': sec_ch_ua,
+            'Sec-Ch-Ua-Mobile': '?1',  # Важно: ?1 для мобильных устройств
+            'Sec-Ch-Ua-Platform': platform,
         })
     
     return headers
