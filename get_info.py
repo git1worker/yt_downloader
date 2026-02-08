@@ -4,11 +4,7 @@ import platform
 
 # Путь к QuickJS
 
-if platform.system() == 'Linux':
-    QUICKJS_PATH = '/usr/bin/qjs'
-else:
-    QUICKJS_PATH = 'C:\\msys64\\mingw64\\bin\\qjs.exe'
-
+QUICKJS_PATH = 'C:\\msys64\\mingw64\\bin\\qjs.exe'
 
 
 def check_quickjs():
@@ -32,7 +28,8 @@ def get_video_info(url, headers):
         # Упрощаем заголовки (убираем излишнее)
         'user_agent': headers['User-Agent'],
         'http_headers': headers,
-        
+        'remote_components': ['ejs:github'],
+
         'cookiefile': 'exported-cookies.txt' if os.path.exists('exported-cookies.txt') else None,
 
         # Базовые параметры загрузки
@@ -41,26 +38,25 @@ def get_video_info(url, headers):
         'skip_unavailable_fragments': True,
 
     }
-    
-    # Проверяем QuickJS
-    quickjs_path = check_quickjs()
-    
-    if quickjs_path:
-        # Добавляем настройки QuickJS только если он найден
-        ydl_opts.update({
-            'js_runtimes': {
-                'quickjs': {
-                    'path': quickjs_path
-                }
-            },
-            'remote_components': ['ejs:github'],
-        })
-        print(f"✅ Используем QuickJS: {quickjs_path}")
-    else:
-        print("⚠️ Работаем без QuickJS - форматы могут быть ограничены")
-    if os.path.exists('exported-cookies.txt'):
-        ydl_opts['cookiefile'] = 'exported-cookies.txt'
-    
+
+    if platform.system() != 'Linux':
+        # Проверяем QuickJS
+        quickjs_path = check_quickjs()
+        
+        if quickjs_path:
+            # Добавляем настройки QuickJS только если он найден
+            ydl_opts.update({
+                'js_runtimes': {
+                    'quickjs': {
+                        'path': quickjs_path
+                    }
+                },
+                
+            })
+            print(f"✅ Используем QuickJS: {quickjs_path}")
+        else:
+            print("⚠️ Работаем без QuickJS - форматы могут быть ограничены")
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             print("🔍 Получаем информацию о видео...")
