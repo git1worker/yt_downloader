@@ -1,7 +1,15 @@
 import yt_dlp
 import os
 import platform
+import requests
 
+def test_connection():
+    test_url = "https://www.google.com"
+    try:
+        response = requests.get(test_url, timeout=10, verify=False)
+        print(f"✅ Соединение с интернетом: {response.status_code}")
+    except Exception as e:
+        print(f"❌ Проблемы с соединением: {e}")
 # Путь к QuickJS
 
 QUICKJS_PATH = 'C:\\msys64\\mingw64\\bin\\qjs.exe'

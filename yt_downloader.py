@@ -66,7 +66,7 @@ def download_format(url, format_id, headers, convert_to_mp3, output_path="downlo
 
 def main():
     print("=== YouTube Downloader ===")
-    
+    test_connection()
     while True:
         url = input("\n🎬 Введите URL YouTube видео (или 'quit' для выхода): ").strip()
         if (url == ""):
